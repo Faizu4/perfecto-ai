@@ -28,7 +28,9 @@ async def read_root(request: Request):
 @app.post("/api")
 async def api(message: Message):
     try:
-        response = requests.post(f"{latest()['url']}/chat", json={'message': message.message})
+        if not current_url:
+            return JSONResponse(content={"error": "No URL set yet"}, status_code=404)
+        response = requests.post(f"{current_url}/chat", json={'message': message.message})
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
