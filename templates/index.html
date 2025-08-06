@@ -1,0 +1,661 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayesha</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+    <style>
+        :root {
+            --background-color: #1a1a1a;
+            --text-color: #e0e0e0;
+            --user-message-color: #007bff;
+            --ai-message-color: #333333;
+            --container-background: #2b2b2b;
+            --input-background: #3c3c3c;
+            --border-color: #444;
+            --icon-color: #a0a0a0;
+        }
+
+        body.light-mode {
+            --background-color: #f0f2f5;
+            --text-color: #333;
+            --container-background: #ffffff;
+            --input-background: #f0f2f5;
+            --ai-message-color: #e9e9eb;
+            --border-color: #ddd;
+            --icon-color: #555;
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow: hidden;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--container-background);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        #chat-header {
+            padding: 10px;
+            background-color: var(--ai-message-color);
+            border-bottom: 1px solid var(--border-color);
+            text-align: center;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #chat-header h1 {
+            margin: 0;
+            font-size: 1.5em;
+            flex-grow: 1;
+            text-align: center;
+        }
+        
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            font-size: 1.2em;
+        }
+
+        #chat-box {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
+            display: flex;
+            flex-direction: column;
+            gap: 20px; /* Increased spacing */
+        }
+
+        #chat-box::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #chat-box::-webkit-scrollbar-track {
+            background: var(--container-background);
+        }
+
+        #chat-box::-webkit-scrollbar-thumb {
+            background-color: var(--input-background);
+            border-radius: 10px;
+            border: 2px solid var(--container-background);
+        }
+
+        .message {
+            display: flex;
+            align-items: flex-end;
+            max-width: 70%;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message .bubble {
+            padding: 15px;
+            border-radius: 20px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .message .bubble img, .message .bubble video {
+            max-width: 100%;
+            border-radius: 15px;
+            display: block;
+        }
+
+        .user-message {
+            align-self: flex-end;
+        }
+
+        .user-message .bubble {
+            background-color: var(--user-message-color);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .ai-message {
+            align-self: flex-start;
+        }
+
+        .ai-message .bubble {
+            background-color: var(--ai-message-color);
+            color: var(--text-color);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .error-message .bubble {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        #input-area {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .icon-button {
+            background: none;
+            border: none;
+            color: var(--icon-color);
+            font-size: 1.5em;
+            cursor: pointer;
+            padding: 10px;
+            transition: color 0.2s;
+            flex-shrink: 0;
+            -webkit-tap-highlight-color: transparent; /* Remove blue highlight on mobile */
+        }
+
+        .icon-button:hover, .icon-button:focus {
+            color: var(--text-color);
+            outline: none;
+        }
+
+        #user-input {
+            flex-grow: 1;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 30px;
+            background-color: var(--input-background);
+            color: var(--text-color);
+            font-size: 1em;
+            outline: none;
+            margin: 0 10px;
+            min-width: 0;
+        }
+
+        #user-input::placeholder {
+            color: #888;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #attachment-menu {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background-color: var(--input-background);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            overflow: hidden;
+            display: none;
+            z-index: 10;
+        }
+
+        .attachment-option {
+            padding: 15px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .attachment-option:hover {
+            background-color: var(--ai-message-color);
+        }
+
+        #settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        #settings-content {
+            background-color: var(--container-background);
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh; /* Make settings scrollable */
+            overflow-y: auto; /* Make settings scrollable */
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .settings-section {
+            margin-bottom: 20px;
+        }
+
+        .settings-section h2 {
+            margin-top: 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .toggle-switch label {
+            font-size: 1.1em;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            -webkit-tap-highlight-color: transparent; /* Remove blue highlight on mobile */
+        }
+
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--user-message-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        #model-select, #personality-input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: var(--input-background);
+            color: var(--text-color);
+            font-size: 1em;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        #personality-input {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .button-primary {
+            background-color: var(--user-message-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .button-primary:hover {
+            background-color: #0056b3;
+        }
+
+        .button-danger {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .button-danger:hover {
+            background-color: #e60000;
+        }
+
+        .warning-text {
+            font-size: 0.9em;
+            color: #ffc107;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-header">
+            <div class="header-icon"></div> <!-- Placeholder for spacing -->
+            <h1>Ayesha</h1>
+            <button class="icon-button header-icon" id="settings-button"><i class="fas fa-cog"></i></button>
+        </div>
+        <div id="chat-box">
+             <div class="message ai-message">
+                <div class="bubble">Hello! How can I help you today?</div>
+            </div>
+        </div>
+        <div id="input-area">
+            <div id="attachment-menu">
+                <div class="attachment-option" data-type="camera">
+                    <i class="fas fa-camera"></i>
+                    <span>Camera</span>
+                </div>
+                <div class="attachment-option" data-type="image">
+                    <i class="fas fa-image"></i>
+                    <span>Images</span>
+                </div>
+                <div class="attachment-option" data-type="all">
+                    <i class="fas fa-file"></i>
+                    <span>Files/Media</span>
+                </div>
+            </div>
+            <input type="file" id="file-input" multiple>
+            <button class="icon-button" id="attachment-button"><i class="fas fa-plus"></i></button>
+            <input type="text" id="user-input" placeholder="Type your message here...">
+            <button class="icon-button" id="mic-button"><i class="fas fa-microphone"></i></button>
+            <button class="icon-button" id="send-button"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <div id="settings-modal">
+        <div id="settings-content">
+            <div class="settings-section">
+                <h2>Theme</h2>
+                <div class="toggle-switch">
+                    <label for="theme-toggle">Dark Mode</label>
+                    <label class="switch">
+                        <input type="checkbox" id="theme-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h2>AI Models</h2>
+                <div class="toggle-switch">
+                    <label for="text-model-toggle">Text AI</label>
+                    <label class="switch">
+                        <input type="checkbox" id="text-model-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-switch">
+                    <label for="image-model-toggle">Image AI</label>
+                    <label class="switch">
+                        <input type="checkbox" id="image-model-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="toggle-switch">
+                    <label for="voice-model-toggle">Voice AI</label>
+                    <label class="switch">
+                        <input type="checkbox" id="voice-model-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            <div class="settings-section">
+                <h2>Switch Model</h2>
+                <select id="model-select">
+                    <option value="gemini-pro">Gemini Pro</option>
+                    <option value="gpt-4">GPT-4</option>
+                    <option value="claude-3">Claude 3</option>
+                </select>
+            </div>
+            <div class="settings-section">
+                <h2>Personality</h2>
+                <p class="warning-text">Warning: This will override the default system personality.</p>
+                <textarea id="personality-input" placeholder="Describe Ayesha's personality..."></textarea>
+                <button id="save-personality-button" class="button-primary">Save</button>
+            </div>
+            <div class="settings-section">
+                <h2>Chat History</h2>
+                <button id="clear-chat-button" class="button-danger">Clear Chat History</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const userInput = document.getElementById('user-input');
+        const sendButton = document.getElementById('send-button');
+        const micButton = document.getElementById('mic-button');
+        const attachmentButton = document.getElementById('attachment-button');
+        const fileInput = document.getElementById('file-input');
+        const attachmentMenu = document.getElementById('attachment-menu');
+        const settingsButton = document.getElementById('settings-button');
+        const settingsModal = document.getElementById('settings-modal');
+        const themeToggle = document.getElementById('theme-toggle');
+        const clearChatButton = document.getElementById('clear-chat-button');
+        const personalityInput = document.getElementById('personality-input');
+        const savePersonalityButton = document.getElementById('save-personality-button');
+
+        async function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === '') return;
+            
+            userInput.value = '';
+            appendMessage('user', message);
+
+            try {
+                const response = await fetch('/api', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if(data.error) {
+                    appendMessage('error', data.error);
+                } else {
+                    appendMessage('ai', data.message || 'No message received.');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                appendMessage('error', 'Sorry, something went wrong. Please try again.');
+            }
+        }
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        sendButton.addEventListener('click', sendMessage);
+
+        micButton.addEventListener('click', () => {
+            // Microphone functionality to be implemented
+            alert('Microphone functionality is not yet implemented.');
+        });
+
+        attachmentButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            attachmentMenu.style.display = attachmentMenu.style.display === 'block' ? 'none' : 'block';
+        });
+
+        document.querySelectorAll('.attachment-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const type = option.getAttribute('data-type');
+                let accept = '';
+                if (type === 'camera') {
+                    accept = 'image/*';
+                    fileInput.capture = 'environment';
+                } else if (type === 'image') {
+                    accept = 'image/*';
+                    fileInput.removeAttribute('capture');
+                } else {
+                    accept = '*/*';
+                    fileInput.removeAttribute('capture');
+                }
+                fileInput.accept = accept;
+                fileInput.click();
+                attachmentMenu.style.display = 'none';
+            });
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            const files = e.target.files;
+            if (!files.length) return;
+
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        appendMessage('error', data.error);
+                    } else {
+                        appendMediaMessage('user', data.file_path, file.type);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error uploading file:', error);
+                    appendMessage('error', 'Error uploading file.');
+                });
+            }
+        });
+
+        function appendMessage(sender, message) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('message', `${sender}-message`);
+
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+            bubble.textContent = message;
+            
+            messageWrapper.appendChild(bubble);
+            chatBox.appendChild(messageWrapper);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function appendMediaMessage(sender, filePath, fileType) {
+            const messageWrapper = document.createElement('div');
+            messageWrapper.classList.add('message', `${sender}-message`);
+
+            const bubble = document.createElement('div');
+            bubble.classList.add('bubble');
+
+            let mediaElement;
+            if (fileType.startsWith('image')) {
+                mediaElement = document.createElement('img');
+            } else if (fileType.startsWith('video')) {
+                mediaElement = document.createElement('video');
+                mediaElement.controls = true;
+            }
+            
+            if (mediaElement) {
+                mediaElement.src = filePath;
+                bubble.appendChild(mediaElement);
+            }
+            
+            messageWrapper.appendChild(bubble);
+            chatBox.appendChild(messageWrapper);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Settings Modal
+        settingsButton.addEventListener('click', () => {
+            settingsModal.style.display = 'flex';
+        });
+
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.style.display = 'none';
+            }
+        });
+
+        // Theme Toggle
+        themeToggle.addEventListener('change', () => {
+            document.body.classList.toggle('light-mode', !themeToggle.checked);
+        });
+
+        // Clear Chat
+        clearChatButton.addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear the chat history?')) {
+                chatBox.innerHTML = '';
+            }
+        });
+
+        // Save Personality
+        savePersonalityButton.addEventListener('click', () => {
+            const personality = personalityInput.value.trim();
+            if (personality) {
+                // Here you would typically save the personality to the server
+                alert('Personality saved!');
+                settingsModal.style.display = 'none';
+            } else {
+                alert('Please enter a personality description.');
+            }
+        });
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!attachmentMenu.contains(e.target) && e.target !== attachmentButton && !attachmentButton.contains(e.target)) {
+                attachmentMenu.style.display = 'none';
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && settingsModal.style.display === 'flex') {
+                e.preventDefault();
+                settingsModal.style.display = 'none';
+            }
+        });
+
+    </script>
+</body>
+</html>
