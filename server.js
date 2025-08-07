@@ -12,7 +12,7 @@ app.use(express.json());
 app.use('/static', express.static('static'));
 
 const UPLOAD_DIRECTORY = './static/uploads';
-let currentUrl = "https://faizu.serveo.net";
+let currentUrl = "https://faizu.serveo.net/chat";
 
 // Set up multer for file uploads
 const storage = multer.diskStorage({
